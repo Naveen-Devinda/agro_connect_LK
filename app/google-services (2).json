@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "901046233740",
+    "project_id": "agroconnectlk-9b25a",
+    "storage_bucket": "agroconnectlk-9b25a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:901046233740:android:ca12278ce77e826e8de9a9",
+        "android_client_info": {
+          "package_name": "com.navee.agroconnectlk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdKX3zwLVa78PNFrFjIHr0tOHsHqcENJE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
