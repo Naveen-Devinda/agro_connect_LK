@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class WelcomeActivity : AppCompatActivity() {
 
@@ -12,10 +14,41 @@ class WelcomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_welcome)
 
-        // Auto move after 3 seconds
         Handler(Looper.getMainLooper()).postDelayed({
+            checkLogin()
+        }, 2000) // 2 seconds splash
+    }
+
+    private fun checkLogin() {
+        val user = FirebaseAuth.getInstance().currentUser
+
+        if (user == null) {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
-        }, 3000)
+        } else {
+            checkUserRole(user.uid)
+        }
+    }
+
+    private fun checkUserRole(uid: String) {
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(uid)
+            .get()
+            .addOnSuccessListener { doc ->
+                val role = doc.getString("role")
+
+                if (role == "Farmer") {
+                    startActivity(Intent(this, FarmerDashboardActivity::class.java))
+                } else {
+                    startActivity(Intent(this, BuyerDashboardActivity::class.java))
+                }
+                finish()
+            }
+            .addOnFailureListener {
+                // If failed to fetch role, go to Login
+                startActivity(Intent(this, LoginActivity::class.java))
+                finish()
+            }
     }
 }

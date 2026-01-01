@@ -32,6 +32,23 @@
                 android:layout_marginTop="12dp"
                 android:textSize="16sp"/>
 
+            <EditText
+                android:id="@+id/etSearch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Search crops..."
+                android:padding="12dp"
+                android:background="@android:drawable/edit_text"
+                android:inputType="text" />
+
+            <Spinner
+                android:id="@+id/spinnerFilter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" />
+
+
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerProducts"
                 android:layout_width="match_parent"
@@ -44,6 +61,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"/>
+
+            <Button
+                android:id="@+id/btnViewOrders"
+                android:text="View Orders"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
 
 
         </LinearLayout>

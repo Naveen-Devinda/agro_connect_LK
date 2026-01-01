@@ -2,86 +2,69 @@ package com.navee.agroconnectlk
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class LoginActivity : AppCompatActivity() {
 
-    private var userType = ""
-    private val generatedOtp = "123456" // demo OTP
+    private val auth = FirebaseAuth.getInstance()
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        val btnFarmer = findViewById<Button>(R.id.btnFarmer)
-        val btnBuyer = findViewById<Button>(R.id.btnBuyer)
+        val etEmail = findViewById<EditText>(R.id.etEmail)
+        val etPassword = findViewById<EditText>(R.id.etPassword)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
-        val phone = findViewById<EditText>(R.id.etPhone)
-        val otp = findViewById<EditText>(R.id.etOtp)
-
-        btnFarmer.setOnClickListener {
-            userType = "Farmer"
-            Toast.makeText(this, "Farmer Selected", Toast.LENGTH_SHORT).show()
-        }
-
-        btnBuyer.setOnClickListener {
-            userType = "Buyer"
-            Toast.makeText(this, "Buyer Selected", Toast.LENGTH_SHORT).show()
-        }
+        val txtRegister = findViewById<TextView>(R.id.txtRegister)
 
         btnLogin.setOnClickListener {
-            if (userType.isEmpty()) {
-                Toast.makeText(this, "Select Farmer or Buyer", Toast.LENGTH_SHORT).show()
+
+            val email = etEmail.text.toString().trim()
+            val password = etPassword.text.toString().trim()
+
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Please enter email and password", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            val phoneNumber = phone.text.toString().trim()
-            if (phoneNumber.isEmpty()) {
-                Toast.makeText(this, "Enter phone number", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            Toast.makeText(this, "Sending OTP to $phoneNumber...", Toast.LENGTH_SHORT).show()
-
-            // Disable button during process
-            btnLogin.isEnabled = false
-
-            // Simulate OTP auto verify after 2 seconds
-            Handler(Looper.getMainLooper()).postDelayed({
-                try {
-                    otp.setText(generatedOtp)
-                    Toast.makeText(this, "OTP Verified Automatically", Toast.LENGTH_LONG).show()
-
-                    // Call the member function
-                    loginSuccess()
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Error during login: ${e.message}", Toast.LENGTH_SHORT).show()
-                    btnLogin.isEnabled = true
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnSuccessListener { result ->
+                    val user = result.user
+                    if (user != null) {
+                        fetchUserRole(user.uid)
+                    }
                 }
-            }, 2000)
+                .addOnFailureListener {
+                    Toast.makeText(this, "Login failed: ${it.message}", Toast.LENGTH_LONG).show()
+                }
+        }
+
+        txtRegister.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 
-    private fun loginSuccess() {
-        try {
-            Toast.makeText(
-                this,
-                "Login Successful as $userType",
-                Toast.LENGTH_LONG
-            ).show()
-
-            val intent = if (userType == "Farmer") {
-                Intent(this, FarmerDashboardActivity::class.java)
-            } else {
-                Intent(this, BuyerDashboardActivity::class.java)
+    private fun fetchUserRole(userId: String) {
+        db.collection("users").document(userId).get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    val role = doc.getString("role")
+                    if (role == "Farmer") {
+                        startActivity(Intent(this, FarmerDashboardActivity::class.java))
+                    } else {
+                        startActivity(Intent(this, BuyerDashboardActivity::class.java))
+                    }
+                    finish()
+                } else {
+                    Toast.makeText(this, "User record not found", Toast.LENGTH_SHORT).show()
+                }
             }
-            startActivity(intent)
-            finish()
-        } catch (e: Exception) {
-            Toast.makeText(this, "Failed to open dashboard: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error fetching user data", Toast.LENGTH_SHORT).show()
+            }
     }
 }
