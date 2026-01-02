@@ -47,6 +47,14 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"/>
 
+    <TextView
+        android:id="@+id/txtCreatedAt"
+        android:textSize="12sp"
+        android:textColor="#757575"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"/>
+
     <LinearLayout
         android:id="@+id/layoutActions"
         android:layout_width="match_parent"

@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
@@ -14,8 +15,11 @@ import java.util.*
 class ProductDetailsActivity : AppCompatActivity() {
 
     private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
+    
     private var farmerId = "FARMER_ID_FIXED"
     private var farmerName = "Agro Farmer"
+    private var buyerName = "Buyer"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +34,7 @@ class ProductDetailsActivity : AppCompatActivity() {
         val cropName = intent.getStringExtra("name") ?: ""
         val price = intent.getStringExtra("price") ?: ""
         
+        // 1. Fetch real farmer info from the crop
         if (cropId.isNotEmpty()) {
             db.collection("crops").document(cropId).get()
                 .addOnSuccessListener { doc ->
@@ -40,13 +45,28 @@ class ProductDetailsActivity : AppCompatActivity() {
                 }
         }
 
+        // 2. Fetch current buyer's name
+        val currentUserId = auth.currentUser?.uid
+        if (currentUserId != null) {
+            db.collection("users").document(currentUserId).get()
+                .addOnSuccessListener { doc ->
+                    buyerName = doc.getString("name") ?: "Buyer"
+                }
+        }
+
         txtName.text = cropName
         txtPrice.text = "Price: $price"
 
         btnOrder.setOnClickListener {
             
             if (!isNetworkAvailable()) {
-                Toast.makeText(this, "No Internet Connection! Order will only sync when online.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "No Internet Connection!", Toast.LENGTH_LONG).show()
+            }
+
+            val user = auth.currentUser
+            if (user == null) {
+                Toast.makeText(this, "Please login to place order", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
 
             val qty = etQty.text.toString().trim()
@@ -73,20 +93,19 @@ class ProductDetailsActivity : AppCompatActivity() {
                 price = price,
                 quantity = qty,
                 totalPrice = total.toString(),
-                buyerId = "BUYER_ID_FIXED", 
-                buyerName = "John Doe",
+                buyerId = user.uid, // Use actual logged-in user ID
+                buyerName = buyerName,
                 farmerId = farmerId,
                 farmerName = farmerName,
                 status = "Pending",
                 orderDate = date
             )
 
-            // JUST PLACE ORDER - DON'T DEDUCT QUANTITY YET (Deduction will happen when Farmer accepts)
             db.collection("orders")
                 .add(order)
                 .addOnSuccessListener { doc ->
                     db.collection("orders").document(doc.id).update("orderId", doc.id)
-                    Toast.makeText(this, "Order Placed! Waiting for Farmer's acceptance.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Order Placed Successfully!", Toast.LENGTH_SHORT).show()
                     finish()
                 }
                 .addOnFailureListener { e ->

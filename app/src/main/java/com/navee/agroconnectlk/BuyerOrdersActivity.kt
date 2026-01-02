@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class BuyerOrdersActivity : AppCompatActivity() {
@@ -17,6 +18,7 @@ class BuyerOrdersActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_buyer_orders)
 
+        // ---------------- UI ----------------
         recycler = findViewById(R.id.recyclerBuyerOrders)
         recycler.layoutManager = LinearLayoutManager(this)
 
@@ -27,7 +29,10 @@ class BuyerOrdersActivity : AppCompatActivity() {
     }
 
     private fun loadBuyerOrders() {
-        val buyerId = "BUYER_ID" // Replace with logged-in buyer ID
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) return
+
+        val buyerId = user.uid // Actual logged-in buyer ID
 
         db.collection("orders")
             .whereEqualTo("buyerId", buyerId)

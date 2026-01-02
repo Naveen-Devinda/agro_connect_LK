@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -96,7 +97,7 @@ class FarmerDashboardActivity : AppCompatActivity() {
         }
 
         // ---------------- Buttons ----------------
-        findViewById<Button>(R.id.btnAddCrop).setOnClickListener {
+        findViewById<FloatingActionButton>(R.id.btnAddCrop).setOnClickListener {
             startActivity(Intent(this, AddEditCropActivity::class.java))
         }
 
@@ -104,11 +105,21 @@ class FarmerDashboardActivity : AppCompatActivity() {
             startActivity(Intent(this, FarmerOrdersActivity::class.java))
         }
 
+        // ---------------- Refresh ----------------
+        findViewById<ImageButton>(R.id.btnRefresh).setOnClickListener {
+            loadCrops()
+            Toast.makeText(this, "Dashboard Refreshed", Toast.LENGTH_SHORT).show()
+        }
+
         // ---------------- Bottom Navigation ----------------
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNav)
         bottomNav.setOnItemSelectedListener {
             when (it.itemId) {
-                R.id.nav_home -> true
+                R.id.nav_home -> {
+                    // 👉 Redirect Home button to View Orders
+                    startActivity(Intent(this, FarmerOrdersActivity::class.java))
+                    true
+                }
                 R.id.nav_market -> true
                 R.id.nav_profile -> {
                     showLogoutDialog()
@@ -128,7 +139,10 @@ class FarmerDashboardActivity : AppCompatActivity() {
 
     // ---------------- LOAD CROPS ----------------
     private fun loadCrops() {
+        val userId = auth.currentUser?.uid ?: return
+
         db.collection("crops")
+            .whereEqualTo("farmerId", userId) // Show only this farmer's crops
             .get()
             .addOnSuccessListener { result ->
                 fullList.clear()

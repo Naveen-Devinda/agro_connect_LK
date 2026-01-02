@@ -21,6 +21,7 @@ class ProductAdapter(
         val qty: TextView = view.findViewById(R.id.txtQty)
         val farmerName: TextView = view.findViewById(R.id.txtFarmerName)
         val farmerPhone: TextView = view.findViewById(R.id.txtFarmerPhone)
+        val createdAt: TextView = view.findViewById(R.id.txtCreatedAt)
         val btnEdit: Button = view.findViewById(R.id.btnEdit)
         val btnDelete: Button = view.findViewById(R.id.btnDelete)
         val layoutActions: LinearLayout = view.findViewById(R.id.layoutActions)
@@ -40,6 +41,7 @@ class ProductAdapter(
         holder.qty.text = "Qty: ${product.quantity} (kg)"
         holder.farmerName.text = "Farmer: ${product.farmerName}"
         holder.farmerPhone.text = "Contact: ${product.farmerPhone}"
+        holder.createdAt.text = "Listed on: ${product.createdAt}"
 
         holder.itemView.setOnClickListener {
             onItemClick?.invoke(product)
