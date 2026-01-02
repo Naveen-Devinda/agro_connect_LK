@@ -5,11 +5,13 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class AddEditCropActivity : AppCompatActivity() {
 
     private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
 
     private var cropId: String? = null
 
@@ -51,41 +53,64 @@ class AddEditCropActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val product = Product(
-                cropId ?: "",
-                name,
-                price,
-                qty
-            )
+            val user = auth.currentUser
+            if (user == null) {
+                Toast.makeText(this, "Please login first", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
 
-            if (cropId == null) {
-                // -------- ADD NEW CROP --------
-                db.collection("crops")
-                    .add(product)
-                    .addOnSuccessListener { doc ->
+            val userId = user.uid
+            
+            // Fetch farmer's full name and phone from 'users' collection
+            db.collection("users").document(userId).get().addOnSuccessListener { userDoc ->
+                if (userDoc.exists()) {
+                    val farmerName = userDoc.getString("name") ?: "Agro Farmer"
+                    val farmerPhone = userDoc.getString("phone") ?: ""
+
+                    val product = Product(
+                        id = cropId ?: "",
+                        name = name,
+                        price = price,
+                        quantity = qty,
+                        farmerId = userId,
+                        farmerName = farmerName,
+                        farmerPhone = farmerPhone
+                    )
+
+                    if (cropId == null) {
+                        // -------- ADD NEW CROP --------
                         db.collection("crops")
-                            .document(doc.id)
-                            .update("id", doc.id)
+                            .add(product)
+                            .addOnSuccessListener { doc ->
+                                db.collection("crops")
+                                    .document(doc.id)
+                                    .update("id", doc.id)
 
-                        Toast.makeText(this, "Crop added", Toast.LENGTH_SHORT).show()
-                        finish()
-                    }
-                    .addOnFailureListener {
-                        Toast.makeText(this, "Failed to add crop", Toast.LENGTH_SHORT).show()
-                    }
+                                Toast.makeText(this, "Crop added", Toast.LENGTH_SHORT).show()
+                                finish()
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(this, "Failed to add crop", Toast.LENGTH_SHORT).show()
+                            }
 
-            } else {
-                // -------- UPDATE EXISTING CROP --------
-                db.collection("crops")
-                    .document(cropId!!)
-                    .set(product)
-                    .addOnSuccessListener {
-                        Toast.makeText(this, "Crop updated", Toast.LENGTH_SHORT).show()
-                        finish()
+                    } else {
+                        // -------- UPDATE EXISTING CROP --------
+                        db.collection("crops")
+                            .document(cropId!!)
+                            .set(product)
+                            .addOnSuccessListener {
+                                Toast.makeText(this, "Crop updated", Toast.LENGTH_SHORT).show()
+                                finish()
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(this, "Failed to update crop", Toast.LENGTH_SHORT).show()
+                            }
                     }
-                    .addOnFailureListener {
-                        Toast.makeText(this, "Failed to update crop", Toast.LENGTH_SHORT).show()
-                    }
+                } else {
+                    Toast.makeText(this, "User data not found in database", Toast.LENGTH_SHORT).show()
+                }
+            }.addOnFailureListener {
+                Toast.makeText(this, "Error fetching user info", Toast.LENGTH_SHORT).show()
             }
         }
     }

@@ -29,6 +29,13 @@ class FarmerDashboardActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 🔐 Safety check (auto login protection)
+        if (auth.currentUser == null) {
+            goToWelcome()
+            return
+        }
+
         setContentView(R.layout.activity_farmer_dashboard)
 
         // ---------------- UI ----------------
@@ -43,7 +50,6 @@ class FarmerDashboardActivity : AppCompatActivity() {
             productList,
             onItemClick = null,
 
-            // ✏ Edit
             onEdit = { product ->
                 val intent = Intent(this, AddEditCropActivity::class.java)
                 intent.putExtra("id", product.id)
@@ -53,7 +59,6 @@ class FarmerDashboardActivity : AppCompatActivity() {
                 startActivity(intent)
             },
 
-            // ❌ Delete
             onDelete = { product ->
                 showDeleteDialog(product.id)
             }
@@ -104,14 +109,11 @@ class FarmerDashboardActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener {
             when (it.itemId) {
                 R.id.nav_home -> true
-
                 R.id.nav_market -> true
-
                 R.id.nav_profile -> {
                     showLogoutDialog()
                     true
                 }
-
                 else -> false
             }
         }
@@ -197,8 +199,11 @@ class FarmerDashboardActivity : AppCompatActivity() {
 
     private fun logoutUser() {
         auth.signOut()
+        goToWelcome()
+    }
 
-        val intent = Intent(this, LoginActivity::class.java)
+    private fun goToWelcome() {
+        val intent = Intent(this, WelcomeActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()

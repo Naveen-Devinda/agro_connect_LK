@@ -16,7 +16,7 @@ class WelcomeActivity : AppCompatActivity() {
 
         Handler(Looper.getMainLooper()).postDelayed({
             checkLogin()
-        }, 2000) // 2 seconds splash
+        }, 5000) // 5 seconds splash
     }
 
     private fun checkLogin() {

@@ -81,11 +81,12 @@ class ProductDetailsActivity : AppCompatActivity() {
                 orderDate = date
             )
 
+            // JUST PLACE ORDER - DON'T DEDUCT QUANTITY YET (Deduction will happen when Farmer accepts)
             db.collection("orders")
                 .add(order)
                 .addOnSuccessListener { doc ->
                     db.collection("orders").document(doc.id).update("orderId", doc.id)
-                    Toast.makeText(this, "Order Placed Successfully!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Order Placed! Waiting for Farmer's acceptance.", Toast.LENGTH_SHORT).show()
                     finish()
                 }
                 .addOnFailureListener { e ->

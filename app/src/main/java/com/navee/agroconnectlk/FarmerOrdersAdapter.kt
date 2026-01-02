@@ -46,7 +46,7 @@ class FarmerOrdersAdapter(
         // UI Logic based on Status
         when (order.status) {
             "Accepted" -> {
-                holder.status.setTextColor(Color.parseColor("#2E7D32")) // Green
+                holder.status.setTextColor(Color.parseColor("#2E7D32")) 
                 holder.btnAccept.visibility = View.GONE
                 holder.btnReject.visibility = View.GONE
                 holder.btnInvoice.visibility = View.VISIBLE
@@ -65,17 +65,14 @@ class FarmerOrdersAdapter(
             }
         }
 
-        // ACCEPT ORDER
         holder.btnAccept.setOnClickListener {
-            updateStatus(order.orderId, "Accepted")
+            processOrder(order, "Accepted")
         }
 
-        // REJECT ORDER
         holder.btnReject.setOnClickListener {
-            updateStatus(order.orderId, "Rejected")
+            processOrder(order, "Rejected")
         }
 
-        // VIEW INVOICE
         holder.btnInvoice.setOnClickListener {
             val intent = Intent(context, InvoiceActivity::class.java)
             intent.putExtra("orderId", order.orderId)
@@ -85,17 +82,38 @@ class FarmerOrdersAdapter(
 
     override fun getItemCount(): Int = orderList.size
 
-    private fun updateStatus(orderId: String, status: String) {
-        if (orderId.isEmpty()) return
-        
-        db.collection("orders")
-            .document(orderId)
-            .update("status", status)
-            .addOnSuccessListener {
-                Toast.makeText(context, "Order $status", Toast.LENGTH_SHORT).show()
+    private fun processOrder(order: Order, newStatus: String) {
+        if (order.orderId.isEmpty()) return
+
+        if (newStatus == "Accepted") {
+            // TRANSACTION: Deduct quantity and update status
+            val cropRef = db.collection("crops").document(order.cropId)
+            val orderRef = db.collection("orders").document(order.orderId)
+
+            db.runTransaction { transaction ->
+                val cropSnap = transaction.get(cropRef)
+                val currentQty = (cropSnap.getString("quantity") ?: "0").toIntOrNull() ?: 0
+                val orderedQty = order.quantity.toIntOrNull() ?: 0
+
+                if (currentQty < orderedQty) {
+                    throw Exception("Not enough stock to accept this order!")
+                }
+
+                transaction.update(cropRef, "quantity", (currentQty - orderedQty).toString())
+                transaction.update(orderRef, "status", "Accepted")
+                null
+            }.addOnSuccessListener {
+                Toast.makeText(context, "Order Accepted and Stock Updated", Toast.LENGTH_SHORT).show()
+            }.addOnFailureListener { e ->
+                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
             }
-            .addOnFailureListener {
-                Toast.makeText(context, "Failed to update order", Toast.LENGTH_SHORT).show()
-            }
+        } else {
+            // Just update status to Rejected
+            db.collection("orders").document(order.orderId)
+                .update("status", "Rejected")
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Order Rejected", Toast.LENGTH_SHORT).show()
+                }
+        }
     }
 }

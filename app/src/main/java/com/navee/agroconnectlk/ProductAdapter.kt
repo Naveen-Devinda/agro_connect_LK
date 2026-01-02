@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
@@ -18,8 +19,11 @@ class ProductAdapter(
         val name: TextView = view.findViewById(R.id.txtName)
         val price: TextView = view.findViewById(R.id.txtPrice)
         val qty: TextView = view.findViewById(R.id.txtQty)
+        val farmerName: TextView = view.findViewById(R.id.txtFarmerName)
+        val farmerPhone: TextView = view.findViewById(R.id.txtFarmerPhone)
         val btnEdit: Button = view.findViewById(R.id.btnEdit)
         val btnDelete: Button = view.findViewById(R.id.btnDelete)
+        val layoutActions: LinearLayout = view.findViewById(R.id.layoutActions)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductViewHolder {
@@ -33,24 +37,33 @@ class ProductAdapter(
 
         holder.name.text = product.name
         holder.price.text = "Price: ${product.price}"
-        holder.qty.text = "Qty: ${product.quantity}"
+        holder.qty.text = "Qty: ${product.quantity} (kg)"
+        holder.farmerName.text = "Farmer: ${product.farmerName}"
+        holder.farmerPhone.text = "Contact: ${product.farmerPhone}"
 
         holder.itemView.setOnClickListener {
             onItemClick?.invoke(product)
         }
 
-        if (onEdit != null) {
-            holder.btnEdit.visibility = View.VISIBLE
-            holder.btnEdit.setOnClickListener { onEdit.invoke(product) }
-        } else {
-            holder.btnEdit.visibility = View.GONE
-        }
+        // Show/Hide buttons based on dashboard type
+        if (onEdit != null || onDelete != null) {
+            holder.layoutActions.visibility = View.VISIBLE
+            
+            if (onEdit != null) {
+                holder.btnEdit.visibility = View.VISIBLE
+                holder.btnEdit.setOnClickListener { onEdit.invoke(product) }
+            } else {
+                holder.btnEdit.visibility = View.GONE
+            }
 
-        if (onDelete != null) {
-            holder.btnDelete.visibility = View.VISIBLE
-            holder.btnDelete.setOnClickListener { onDelete.invoke(product) }
+            if (onDelete != null) {
+                holder.btnDelete.visibility = View.VISIBLE
+                holder.btnDelete.setOnClickListener { onDelete.invoke(product) }
+            } else {
+                holder.btnDelete.visibility = View.GONE
+            }
         } else {
-            holder.btnDelete.visibility = View.GONE
+            holder.layoutActions.visibility = View.GONE
         }
     }
 

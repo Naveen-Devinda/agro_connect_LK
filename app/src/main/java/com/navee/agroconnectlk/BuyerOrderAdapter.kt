@@ -29,7 +29,7 @@ class BuyerOrderAdapter(
         val order = orderList[position]
 
         holder.crop.text = order.cropName
-        holder.qty.text = "Qty: ${order.quantity}"
+        holder.qty.text = "Qty: ${order.quantity} (kg)" // Added (kg) here
         holder.total.text = "Total: Rs ${order.totalPrice}"
         holder.status.text = "Status: ${order.status}"
 
